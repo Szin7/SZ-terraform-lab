@@ -237,19 +237,6 @@ AWS initiated termination of one instance, returning the group toward its origin
 
 The CPU target-tracking policy was also verified as enabled, with a target of 50% average CPU utilization. I did not conduct a separate CPU-load test, so automatic CPU-triggered scaling is not claimed as a tested result.
 
-## Issues I ran into
-
-A few problems came up while building the lab.
-
-**Terraform providers on Windows and WSL:** I initially initialized Terraform in Windows and later ran commands through WSL. Terraform needed the appropriate platform-specific AWS provider binaries, so I had to initialize the environment again.
-
-**Ansible execution environment:** I first tried running Ansible directly from PowerShell. I switched to WSL Ubuntu, where Ansible was installed and the playbook syntax check succeeded.
-
-**Removing the original EC2 resource:** After replacing the standalone EC2 instance with an Auto Scaling Group, Terraform validation failed because the outputs still referenced the removed instance. I updated the outputs to use the ALB DNS name instead.
-
-**EC2 startup script formatting:** I corrected Windows-style line endings in the Terraform user-data script to avoid potential Linux execution issues.
-
-These were useful reminders to validate the configuration after each change and to pay attention to differences between development environments.
 
 ## Cleanup
 
