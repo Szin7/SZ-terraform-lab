@@ -61,11 +61,11 @@ resource "aws_security_group" "web" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "HTTP traffic from ALB only"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
   }
 
   ingress {
@@ -87,32 +87,20 @@ resource "aws_security_group" "web" {
   tags = { Name = "${var.project_name}-sg" }
 }
 
-resource "aws_instance" "web" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = var.instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.web.id]
-  associate_public_ip_address = true
+# Second public subnet for Application Load Balancer
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  map_public_ip_on_launch = true
 
-  user_data = <<-EOF
-    #!/bin/bash
-    dnf install -y nginx
-    systemctl enable --now nginx
-    cat > /usr/share/nginx/html/index.html <<\x27HTML\x27
-    <!DOCTYPE html>
-    <html><head><title>SZ Terraform Lab</title></head>
-    <body><h1>Successfully deployed with Terraform!</h1>
-    <p>AWS VPC and EC2 web server are running.</p></body></html>
-    HTML
-  EOF
-
-  root_block_device {
-    volume_size = 8
-    volume_type = "gp3"
-    encrypted   = true
+  tags = {
+    Name = "${var.project_name}-public-subnet-2"
   }
+}
 
-  tags = { Name = "${var.project_name}-ec2" }
-
-  depends_on = [aws_route_table_association.public]
+# Associate second public subnet with the existing public route table
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
 }

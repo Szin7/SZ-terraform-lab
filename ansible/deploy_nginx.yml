@@ -1,0 +1,45 @@
+
+---
+- name: Configure Nginx web servers
+  hosts: web
+  become: true
+
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+
+    - name: Deploy sample website
+      ansible.builtin.copy:
+        dest: /usr/share/nginx/html/index.html
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>SZ Terraform Lab</title>
+          </head>
+          <body>
+            <h1>Welcome to SZ Terraform Lab!</h1>
+            <h2>Deployed using Terraform and Ansible</h2>
+            <p>Application: Nginx</p>
+            <p>Infrastructure: AWS EC2 Auto Scaling</p>
+          </body>
+          </html>
+      notify: Restart Nginx
+
+    - name: Enable and start Nginx
+      ansible.builtin.service:
+        name: nginx
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
